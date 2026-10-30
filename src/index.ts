@@ -1,5 +1,5 @@
 /**
- * dsh-ntr host entry: mounts the `/acp` Connection RPC channel and the
+ * dsh-ntr-plus host entry: mounts the `/acp` Connection RPC channel and the
  * `/api/acp/stream` SSE route, owns every spawned ACP child, and tears all of
  * them down with the plugin fiber. Named exports only (a default export would
  * hide the loader metadata — see harness postmortem 0001).
@@ -14,7 +14,7 @@ import type { AcpEvent, ApprovalDeadlineKey } from './protocol.ts'
 import type { ApprovalOutcome } from './bridge.ts'
 import type { RosterPresetRow, SessionLogLike } from './impl.ts'
 
-export const name = 'dsh-ntr'
+export const name = 'dsh-ntr-plus'
 // `approval` / `agents` are deliberately NOT listed here: they are optional
 // collaborators probed structurally below. A hard dependency would make the
 // whole plugin fail to load on a deployment without them (see the LLM service
@@ -250,7 +250,7 @@ export function apply(ctx: Context, config?: unknown): void {
     execute: (args: unknown, exec: unknown) => Promise<{ text: string }>
   } => ({
     name,
-    description: 'dsh-ntr: an ACP tool the agent already executed in its own process; this call only displays its output.',
+    description: 'dsh-ntr-plus: an ACP tool the agent already executed in its own process; this call only displays its output.',
     parameters: { type: 'object', properties: {} },
     output: {
       schema: { type: 'object', properties: {} },
@@ -469,7 +469,7 @@ export function apply(ctx: Context, config?: unknown): void {
         const handle = llmHandle.registerAdapter(['acp'], adapter)
         return () => { handle() }
       },
-      'dsh-ntr: acp llm adapter',
+      'dsh-ntr-plus: acp llm adapter',
     )
   }
 
@@ -514,7 +514,7 @@ export function apply(ctx: Context, config?: unknown): void {
       }
       return connection.rpc.handle('/acp', handler)
     },
-    'dsh-ntr: /acp rpc channel',
+    'dsh-ntr-plus: /acp rpc channel',
   )
 
   ctx.effect(
@@ -587,13 +587,13 @@ export function apply(ctx: Context, config?: unknown): void {
         }))
       },
     }),
-    'dsh-ntr: /api/acp/stream SSE route',
+    'dsh-ntr-plus: /api/acp/stream SSE route',
   )
 
   ctx.effect(
     () => async () => {
       await manager.shutdownAll()
     },
-    'dsh-ntr: child teardown',
+    'dsh-ntr-plus: child teardown',
   )
 }

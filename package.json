@@ -1,9 +1,9 @@
 {
-  "name": "dsh-ntr",
+  "name": "dsh-ntr-plus",
   "version": "0.1.6",
   "description": "Interactive Agent Client Protocol (ACP) client for the DSH web UI: attach any ACP-capable agent and stream its session.",
-  "repository": "https://github.com/Feiyu180/dsh-ntr.git",
-  "homepage": "https://github.com/Feiyu180/dsh-ntr#readme",
+  "repository": "https://github.com/Feiyu180/dsh-ntr-plus.git",
+  "homepage": "https://github.com/Feiyu180/dsh-ntr-plus#readme",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",

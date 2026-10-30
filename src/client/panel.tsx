@@ -1258,7 +1258,7 @@ function formatStamp(ms: number): string {
  * Workspace rules (P0-1): a non-empty single-root `cwd` also pins
  * `allowedCwdRoots` to exactly that path — an explicit narrowing, so saving
  * from the panel can never silently widen the sandbox. An empty `cwd` sends
- * neither field and the host falls back to `~/.dsh/dsh-ntr/workspaces`. Advanced
+ * neither field and the host falls back to `~/.dsh/dsh-ntr-plus/workspaces`. Advanced
  * mode sends the edited roots as-is (deduplicated).
  */
 /** `''` = host default, `0` = never release, otherwise a sane millisecond window. */
@@ -1691,7 +1691,7 @@ function WorkspaceBlock({
           className="dwa-input"
           value={form.cwd}
           onChange={e => patch({ cwd: e.target.value })}
-          placeholder={acp.label('默认 ~/.dsh/dsh-ntr/workspaces', 'Default: ~/.dsh/dsh-ntr/workspaces')}
+          placeholder={acp.label('默认 ~/.dsh/dsh-ntr-plus/workspaces', 'Default: ~/.dsh/dsh-ntr-plus/workspaces')}
         />
         {cwdInvalid && (
           <span className="dwa-error">{acp.label('必须是绝对路径（如 /work 或 C:\\work）', 'Must be an absolute path (e.g. /work or C:\\work)')}</span>

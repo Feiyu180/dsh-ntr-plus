@@ -7,7 +7,7 @@
  * and those injections ride the request as sourced USER messages — folded
  * directly behind the person's own message, with the runtime-context snapshot
  * appended after them. A bridge that forwarded "the last user message" would
- * hand the ACP agent the harness's context instead of the question. dsh-ntr's
+ * hand the ACP agent the harness's context instead of the question. dsh-ntr-plus's
  * bridge filters by `message.source.kind`, and this row is the second line of
  * defence: it removes the injections before they are even committed, so the
  * session's durable transcript shows the conversation and nothing else.
@@ -66,7 +66,7 @@
  * user switched agents in the composer. The driver exposes exactly one seam for
  * this: the `agent/request` waterfall. This row registers a listener that
  * rewrites the resolved config to the plugin's conversation→agent binding
- * (`dsh-ntr` records it on bind, on model switch, and when a session
+ * (`dsh-ntr-plus` records it on bind, on model switch, and when a session
  * materializes; the plugin's default agent answers conversations nobody bound).
  *
  * The listener is registered with `{ prepend: true }`: waterfall listeners run
@@ -87,7 +87,7 @@
  * in src/bridge.ts (tests/register.spec.ts asserts the two see one registry).
  *
  * Deliberately dependency-free: this file is loaded by the harness's Loader as
- * the preset declaration's `dsh-ntr/acp-guard` row (see acp.patch.yml), and it
+ * the preset declaration's `dsh-ntr-plus/acp-guard` row (see acp.patch.yml), and it
  * needs nothing but the `ctx` it is handed and node builtins. Keeping it that
  * way means a preset row can never fail for a reason the plugin's own dependency
  * graph would have to explain. A filter bug must never eat context, so every
@@ -101,7 +101,7 @@ export const name = 'acp-guard'
 const DEFAULT_STRIPPED_SOURCES = ['agent-instructions', 'skill-catalog', 'plugin']
 
 /** The shared binding registry's key — hand-copy of `ACP_ROUTE_BINDING_KEY` (src/bridge.ts). */
-const BINDING_KEY = Symbol.for('dsh-ntr.acp-binding')
+const BINDING_KEY = Symbol.for('dsh-ntr-plus.acp-binding')
 
 /** Read and validate the `strippedSources` list. */
 function strippedSourcesOf(config) {
@@ -182,7 +182,7 @@ function makeVirtualDefs() {
 function virtualToolDefinition(toolName) {
   return {
     name: toolName,
-    description: 'dsh-ntr: display card of a tool the ACP agent already executed in its own process.',
+    description: 'dsh-ntr-plus: display card of a tool the ACP agent already executed in its own process.',
     parameters: { type: 'object', properties: {} },
     output: {
       schema: { type: 'object', properties: {} },

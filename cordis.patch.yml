@@ -1,4 +1,4 @@
-# Mount line for the dsh-ntr bundle.
+# Mount line for the dsh-ntr-plus bundle.
 #
 # The pure package-name row is REQUIRED for the ClientModuleRegistry to match
 # the browser half (dsh.client in package.json); the host half is the same row
@@ -8,15 +8,15 @@
 # `defs`), but it is not the only source and not a boundary. The settings page's
 # launch-command box (`AgentForm.commandLine` in src/client/panel.tsx) writes
 # through RPC `agent/save` → `validateAgentDef` → `BridgeManager.saveAgent` into
-# `~/.dsh/dsh-ntr/agents.json`, and that is what spawns the child.
+# `~/.dsh/dsh-ntr-plus/agents.json`, and that is what spawns the child.
 # `validateAgentDef` checks shape only (non-empty, splittable command line,
 # length) — there is no program whitelist, so the browser CAN name any program.
 # A child's env comes from the same two places, and `detectHostAgents` hands the
 # stored `command` / `args` / `env` back to the browser UNSANITIZED as
 # `currentConfig`, where `envRows` edits them.
 - insert:
-    - id: dsh-ntr
-      name: dsh-ntr
+    - id: dsh-ntr-plus
+      name: dsh-ntr-plus
       config:
         agents: []
         # transcriptMaxEntries: 600
@@ -65,7 +65,7 @@
         # so it needs no install step and has no config knob. The settings card
         # only reports the harness roster's verdict for the `preset-acp` row.
         # The plugin's OWN default ACP agent (panel's ★ button) lives in the
-        # agent registry file at `~/.dsh/dsh-ntr/agents.json`, key
+        # agent registry file at `~/.dsh/dsh-ntr-plus/agents.json`, key
         # `defaultAgentId` (`pluginStateDir` + `BridgeManager.getStoragePath`).
         # `~/.dsh/acp-agents.json` is only a MIGRATION SOURCE (`legacyStatePaths`):
         # `migrateLegacyState` moves it into the plugin directory on first boot,

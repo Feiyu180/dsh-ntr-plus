@@ -1,5 +1,5 @@
 /**
- * dsh-ntr browser entry: builds the store over the Connection RPC face and
+ * dsh-ntr-plus browser entry: builds the store over the Connection RPC face and
  * contributes every public seat — the settings section, the ACP conversation
  * view, the agent-native mode control, and the ACP base in the composer's
  * model seat (installed by the ACP-mode gate, which is what keeps it out of
@@ -33,7 +33,7 @@ import type { AcpChatInjected, AcpSessionFace, AcpSessionsSnapshot, SessionListS
 import { createSlashIsolation, slashAcpVerdict } from './slash-isolation.ts'
 import type { SlashSource } from './slash-isolation.ts'
 
-export const name = 'dsh-ntr-client'
+export const name = 'dsh-ntr-plus-client'
 export const inject = ['slots', 'connection']
 
 /** Structural view of the browser Connection handle (official type is not merged into Context). */
@@ -107,7 +107,7 @@ export function apply(ctx: Context): void {
   const connection = ctx.get('connection') as BrowserConnection | undefined
   const rpc = connection?.rpc
   if (rpc === undefined) {
-    throw new Error('dsh-ntr: browser connection.rpc is unavailable')
+    throw new Error('dsh-ntr-plus: browser connection.rpc is unavailable')
   }
   const call: RpcCall = (channel, endpoint, payload) => rpc.call(channel, endpoint, payload)
 
@@ -148,7 +148,7 @@ export function apply(ctx: Context): void {
       stopService()
       stop?.()
     }
-  }, 'dsh-ntr: locale switch re-render')
+  }, 'dsh-ntr-plus: locale switch re-render')
 
   /** This session's command/projection face (`ctx.sessions`); `undefined` before it materializes. */
   const faceFor = (sessionId: string): AcpSessionFace | undefined => {
@@ -172,7 +172,7 @@ export function apply(ctx: Context): void {
     order: 120,
     label: () => 'NTR',
     inject: () => ({ acp: store }),
-  }, AcpSettingsSection)), 'dsh-ntr: settings section')
+  }, AcpSettingsSection)), 'dsh-ntr-plus: settings section')
 
   // The same NTR settings, opened from the composer when the agent roster is
   // empty (the agent base's picker action). It rides the frame's overlay layer
@@ -185,7 +185,7 @@ export function apply(ctx: Context): void {
     id: 'acp-settings-dialog',
     order: 30,
     inject: () => ({ acp: store }),
-  }, AcpSettingsDialog as unknown as SlotComponent<any>)), 'dsh-ntr: NTR settings dialog')
+  }, AcpSettingsDialog as unknown as SlotComponent<any>)), 'dsh-ntr-plus: NTR settings dialog')
 
   // The agent's OWN modes sit in the composer tool row — the seat the slot
   // contract reserves for exactly this ("entries sit beside that chrome, never
@@ -204,7 +204,7 @@ export function apply(ctx: Context): void {
     // `owner` field: the props contract is declared structurally in
     // composer-mode.tsx, so the composed-props constraint cannot be met by type
     // (see the note there). Runtime passes the real shares either way.
-  }, AcpComposerMode as unknown as SlotComponent<any>)), 'dsh-ntr: composer agent-mode control')
+  }, AcpComposerMode as unknown as SlotComponent<any>)), 'dsh-ntr-plus: composer agent-mode control')
 
   // Its picker rides the composer's overlay seat — the platform's home for
   // menus, so the popup floats above the card instead of being clipped by it.
@@ -213,7 +213,7 @@ export function apply(ctx: Context): void {
     id: 'acp-menu',
     order: 10,
     inject: (sessionId: unknown) => chatFace(sessionId),
-  }, AcpSessionMenu as unknown as SlotComponent<any>)), 'dsh-ntr: composer ACP picker')
+  }, AcpSessionMenu as unknown as SlotComponent<any>)), 'dsh-ntr-plus: composer ACP picker')
 
   // The agent tag riding the composer card's top edge. The agent base steps
   // aside after the conversation's first ACP turn, which also LOCKS the
@@ -228,7 +228,7 @@ export function apply(ctx: Context): void {
     id: 'acp-agent-tag',
     order: 5,
     inject: (sessionId: unknown) => chatFace(sessionId),
-  }, AcpComposerAgentTag as unknown as SlotComponent<any>)), 'dsh-ntr: composer agent tag')
+  }, AcpComposerAgentTag as unknown as SlotComponent<any>)), 'dsh-ntr-plus: composer agent tag')
 
   /**
    * The client runtime's session list store, read structurally. Used to find
@@ -582,7 +582,7 @@ export function apply(ctx: Context): void {
       store.noteSeatDiag('gate disposed')
       store.notePermissionSeatDiag('gate disposed')
     }
-  }, 'dsh-ntr: ACP mode tracking')
+  }, 'dsh-ntr-plus: ACP mode tracking')
 
   /**
    * Slash isolation (`src/client/slash-isolation.ts`): in an ACP conversation
@@ -656,7 +656,7 @@ export function apply(ctx: Context): void {
         // timestamped console record of.
         if (warned === line) return
         warned = line
-        if (line !== 'idle') console.warn(`[dsh-ntr] slash isolation: ${line}`)
+        if (line !== 'idle') console.warn(`[dsh-ntr-plus] slash isolation: ${line}`)
       },
     })
     /**
@@ -700,7 +700,7 @@ export function apply(ctx: Context): void {
       isolation.dispose()
       store.noteSlashDiag('idle')
     }
-  }, 'dsh-ntr: slash isolation')
+  }, 'dsh-ntr-plus: slash isolation')
 
   // The ACP view tab: the agent's real stream (tool cards, plans, unified
   // diffs). Session-scope list entry; the view ring renders it one tab at a
@@ -712,5 +712,5 @@ export function apply(ctx: Context): void {
     order: 20,
     label: () => 'NTR',
     inject: (sessionId: unknown) => chatFace(sessionId),
-  }, AcpConversationView as unknown as SlotComponent<any>)), 'dsh-ntr: ACP view tab')
+  }, AcpConversationView as unknown as SlotComponent<any>)), 'dsh-ntr-plus: ACP view tab')
 }

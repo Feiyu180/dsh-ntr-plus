@@ -660,7 +660,7 @@ export declare class AgentBridge {
  */
 export declare function permissionToolName(toolCall: unknown): string;
 /**
- * This plugin's OWN state directory, `~/.dsh/dsh-ntr`.
+ * This plugin's OWN state directory, `~/.dsh/dsh-ntr-plus`.
  *
  * Everything this plugin persists belongs in here — the agent registry, the
  * probed model catalog, and the default ACP execution workspaces. `~/.dsh` is
@@ -688,7 +688,7 @@ export declare function pluginStateDir(home?: string): string;
 export declare function rewriteLegacyWorkspaceRoots(def: AcpAgentDef, home?: string): AcpAgentDef;
 /**
  * Plugin-owned default execution workspace, anchored to the plugin state dir
- * (`~/.dsh/dsh-ntr/workspaces`).
+ * (`~/.dsh/dsh-ntr-plus/workspaces`).
  *
  * It deliberately does NOT derive from `process.cwd()`: that is wherever the
  * DSH host happened to be launched from, so the "default workspace" used to
@@ -1078,7 +1078,7 @@ export declare class BridgeManager {
      * Let the host resolve a chat session's workspace root — the sidebar's
      * selected workspace, which the agent's session and its process both run in.
      * Absent resolver → every chat session falls back to the agent's configured
-     * cwd (`~/.dsh/dsh-ntr/workspaces`), which is the right answer for `/acp`-RPC
+     * cwd (`~/.dsh/dsh-ntr-plus/workspaces`), which is the right answer for `/acp`-RPC
      * sessions and headless deployments.
      */
     setSessionWorkspaceResolver(resolver?: SessionWorkspaceResolver): void;

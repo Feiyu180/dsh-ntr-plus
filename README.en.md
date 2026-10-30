@@ -1,4 +1,4 @@
-# dsh-ntr
+# dsh-ntr-plus
 
 > This is a **personal build of GDWhisper/dsh-ntr 0.1.5** (upstream is at 0.3.x with substantially different internals — see [CHANGELOG.md](./CHANGELOG.md)). MIT, copyright GDWhisper.
 
@@ -27,51 +27,27 @@ In one sentence: your host agent acts as an ACP client, negotiates capabilities 
 
 This plugin is a DSH **bundle**: `package.json`'s `dsh.bundle.patch` declares the two patches shipped with the package — the plugin's own `cordis.patch.yml`, and the NTR-mode preset at `presets/acp/acp.patch.yml`. After `dsh plugin` installs it, the package joins the profile's `dsh.profile.bundles` and the patch layers take effect **automatically** — no config file needs editing by hand.
 
-### Option 1: from the official UI
-
-Open the **Plugins** page in DSH's sidebar, click **Add plugin**, enter `dsh-ntr`, and click install. Refresh the page and it's ready to use.
-
-### Option 2: from the npm registry
+### Option 1: from GitHub (recommended)
 
 ```bash
-dsh plugin --profile web add dsh-ntr@latest
+dsh plugin --profile web add github:Feiyu180/dsh-ntr-plus
 ```
 
-Run the same command again to upgrade.
+`--profile` is required (web: `web`, desktop app: `desktop`, TUI: `tui`). Restart DSH afterwards.
 
-> **Always pass `@latest`**: without it the package manager keeps reusing the version it wrote the first time, and `update` won't get you off it afterwards.
+### Option 2: from the release package (offline)
 
-### Option 3: via the [dsh-market](https://github.com/dsh-market/dsh-market) plugin market
-
-First install the market itself:
+Download `dsh-ntr-plus-0.1.6.tgz` from the release, then:
 
 ```bash
-dsh plugin --profile web add dshmarket
+dsh plugin --profile web add ./dsh-ntr-plus-0.1.6.tgz
 ```
 
-Restart `dsh web` and open the **Plugins** page: on dsh 0.2.1+ the market is the **Plugin Market** tab next to **Installed**; on older hosts it lives under **Settings → Plugin Market**. Search for `dsh-ntr`, confirm the source, and install in one click — refresh the page and it's live; update checks and upgrades afterwards also happen in the market. The official DSH Desktop app ships with this market preset, so just search and install from the app's **Plugins** page.
+### Option 3: from source
 
-> The market's catalog comes from the curated [awesome-dsh-plugin](https://awesome-dsh-plugin.com) registry and refreshes daily. If `dsh-ntr` doesn't show up in search yet, install it from npm with Option 2 — nothing is lost.
+This package already ships the built `lib/`; building is only needed if you change the sources, and that flow lives in the upstream repository (this package has no `tsconfig.json` / `tests/`).
 
-### Option 4: from source
-
-Requires Node.js ≥ 22.12.0.
-
-```bash
-git clone https://github.com/GDWhisper/dsh-ntr.git
-cd dsh-ntr
-npm install        # build dependencies (typescript, …)
-npm run build      # compile host TS + browser bundle into lib/ (build output is not committed — this step is required)
-dsh plugin --profile web add ./
-```
-
-To upgrade later: `git pull` → `npm run build` → restart `dsh web`. `add .` installs the directory as `link:`, so a rebuild plus a restart picks up the changes — no re-add needed.
-
-> Before switching from the source install to the npm/market build, uninstall the old version and delete `node_modules/dsh-ntr` from the profile. pnpm's hoisted layout leaves the linked checkout's `node_modules` inside the package directory, and the stale dependencies shadow the newly installed SDK — see the `EPERM ... zod` entry in the FAQ.
-
-> `dsh plugin` is a pnpm forwarder — `--profile <name>` is required, and `add .` installs the current directory as `link:`. The official desktop app's profile is owned by its own plugin manager; don't run the CLI against it.
-
----
+> `dsh plugin` is a pnpm forwarder; `--profile <name>` is required. The official desktop app manages its own profile — do not run the CLI against it.
 
 ## Getting started
 
@@ -159,7 +135,7 @@ One class of agents pins the workspace the moment the process starts, and ignore
 
 **Will the platform risk-control me? Will I get banned? Is this a reverse proxy?**
 
-No, and it isn't a reverse proxy. dsh-ntr talks to agents over ACP — the officially supported protocol entry point of those agents. The plugin only launches your local agent process and talks to it; it never touches platform APIs and forwards no requests. Model calls are made by the agent itself, no different from you using it directly in a terminal. Reasonable use within what NTR provides is officially allowed, and won't get you banned.
+No, and it isn't a reverse proxy. dsh-ntr-plus talks to agents over ACP — the officially supported protocol entry point of those agents. The plugin only launches your local agent process and talks to it; it never touches platform APIs and forwards no requests. Model calls are made by the agent itself, no different from you using it directly in a terminal. Reasonable use within what NTR provides is officially allowed, and won't get you banned.
 
 **Why is DSH's model selector gone from the composer after I pick an agent?**
 
@@ -207,7 +183,7 @@ Normal. Mode lists are declared by each agent itself (sent via `session/set_mode
 
 **Activation fails with `EPERM ... zod` after switching from the source install to npm / the market?**
 
-That's stale dependency state, not a missing plugin file: the failing path will contain `node_modules/dsh-ntr/node_modules/.pnpm/...`. The source install uses `link:` to your checkout; pnpm's hoisted layout replaces the package directory with the registry files but leaves the link target's `node_modules` behind. That old tree (an older `@agentclientprotocol/sdk` plus its broken `zod` symlink) shadows the freshly installed dependency, so DSH's import hits the bad link and fails with `EPERM`. Fix: uninstall `dsh-ntr` in the plugin manager, remove `~/.dsh/profiles/<profile>/node_modules/dsh-ntr` (or just its nested `node_modules`), then reinstall and restart. For the desktop app's profile, uninstall/reinstall from the app's Plugins page instead of the CLI.
+That's stale dependency state, not a missing plugin file: the failing path will contain `node_modules/dsh-ntr-plus/node_modules/.pnpm/...`. The source install uses `link:` to your checkout; pnpm's hoisted layout replaces the package directory with the registry files but leaves the link target's `node_modules` behind. That old tree (an older `@agentclientprotocol/sdk` plus its broken `zod` symlink) shadows the freshly installed dependency, so DSH's import hits the bad link and fails with `EPERM`. Fix: uninstall `dsh-ntr-plus` in the plugin manager, remove `~/.dsh/profiles/<profile>/node_modules/dsh-ntr-plus` (or just its nested `node_modules`), then reinstall and restart. For the desktop app's profile, uninstall/reinstall from the app's Plugins page instead of the CLI.
 
 ---
 
@@ -231,18 +207,18 @@ That was the user part. What follows is for people modifying this plugin, or wri
 
 ### Minimal config
 
-Mount it in your profile's `cordis.patch.yml`. When `cwd` / `allowedCwdRoots` are omitted, the plugin's own workspace `~/.dsh/dsh-ntr/workspaces` is used (created automatically on save); `command` is **one full command line** — quote paths that contain spaces.
+Mount it in your profile's `cordis.patch.yml`. When `cwd` / `allowedCwdRoots` are omitted, the plugin's own workspace `~/.dsh/dsh-ntr-plus/workspaces` is used (created automatically on save); `command` is **one full command line** — quote paths that contain spaces.
 
 ```yaml
-- id: dsh-ntr
-  name: dsh-ntr
+- id: dsh-ntr-plus
+  name: dsh-ntr-plus
   config:
     agents:
       - id: pi
         title: pi coding agent (ACP)
         command: /path/to/bin/pi-acp     # e.g. "codebuddy --acp"
-        cwd: ~/.dsh/dsh-ntr/workspaces
-        allowedCwdRoots: [~/.dsh/dsh-ntr/workspaces]
+        cwd: ~/.dsh/dsh-ntr-plus/workspaces
+        allowedCwdRoots: [~/.dsh/dsh-ntr-plus/workspaces]
 ```
 
 Optional agent fields: `npmPackage` (auto `npm install -g` when not found on PATH), `exposedModels` (which variants the NTR seat menu lists), `idleTimeoutMs` (idle-release window for chat processes; `0` = never release, default 30 minutes), `mcpServers` (extra MCP servers handed to the agent). Plugin-level there are also `transcriptMaxEntries` (per-conversation event buffer cap, default 600) and `probeModelsOnBoot` (kept for compatibility; boot-time per-agent probing no longer happens — see the comment on `bootstrapCatalogs`). Reliability timeouts and retries (`startupTimeoutMs`, `cancelFallbackMs`, `staleCancelRetryDelayMs`, `staleCancelMaxRetries`, `permissionTimeoutMs`, `permissionFallbackTimeoutMs`) are covered by [AGENTS.md](./AGENTS.md) constraints 12 and 13; anything editable in the Settings page should be edited there.
@@ -279,7 +255,7 @@ dsh plugin --profile web add ./   # mount into the Web profile
 
 Each item below corresponds to a real past failure; read the linked doc before changing code. The browser half talks to the host half via `/acp` RPC and `/api/acp/stream` SSE; the host half runs one `AgentBridge` per conversation, driving the agent child process over stdio JSON-RPC.
 
-Code map: `src/index.ts` (plugin entry) · `src/protocol.ts` (shared types) · `src/impl.ts` (pure host logic) · `src/bridge.ts` (child-process bridge) · `src/client/` (React extension) · `presets/acp/` (NTR mode declaration) · `~/.dsh/dsh-ntr/` (runtime state).
+Code map: `src/index.ts` (plugin entry) · `src/protocol.ts` (shared types) · `src/impl.ts` (pure host logic) · `src/bridge.ts` (child-process bridge) · `src/client/` (React extension) · `presets/acp/` (NTR mode declaration) · `~/.dsh/dsh-ntr-plus/` (runtime state).
 
 - **DSH renders, nothing more**: the plugin doesn't write DSH's model routing, doesn't take over the host's model catalog, and never lets ACP models appear in DSH's native selector.
 - **Workspace = the side-panel path**: the directory opened in the side panel must become both the `session/new` cwd **and** the agent child's own cwd. One agent (codebuddy) pins its workspace at process startup.

@@ -1,6 +1,6 @@
 # 安装 / Install
 
-本发行包是 **dsh-ntr 0.1.6** 的**已构建**版本：`lib/` 里就是可以直接运行的产物，**不需要** `npm install` 或 `npm run build`。
+本发行包是 **dsh-ntr-plus 0.1.6** 的**已构建**版本：`lib/` 里就是可以直接运行的产物，**不需要** `npm install` 或 `npm run build`。
 This release ships the **prebuilt** `lib/`, so no `npm install` / `npm run build` is needed.
 
 前置条件 / Requirements：
@@ -17,13 +17,13 @@ This release ships the **prebuilt** `lib/`, so no `npm install` / `npm run build
 
 ```bash
 # 用本目录里的 tgz（路径换成你解压后的真实路径）
-dsh plugin --profile web add ./dsh-ntr-0.1.6.tgz
+dsh plugin --profile web add ./dsh-ntr-plus-0.1.6.tgz
 ```
 
 或者用解压出来的目录（会以 `link:` 方式装进去，改源码后重启即生效）：
 
 ```bash
-dsh plugin --profile web add /绝对路径/dsh-ntr
+dsh plugin --profile web add /绝对路径/dsh-ntr-plus
 ```
 
 装完**重启 DSH**。插件带的 `dsh.bundle.patch` 会自动并进 profile 的 `bundles`，不需要手动改配置。
@@ -37,11 +37,11 @@ dsh plugin --profile web add /绝对路径/dsh-ntr
 仓库推到 GitHub 之后，别人可以直接：
 
 ```bash
-dsh plugin --profile web add github:<你的用户名>/dsh-ntr
+dsh plugin --profile web add github:<你的用户名>/dsh-ntr-plus
 ```
 
 `pnpm` 会拉取仓库默认分支并安装；仓库里已经带了 `lib/`，所以同样不需要构建。
-升级：改 `package.json` 版本号后重跑同一条命令，或 `dsh plugin --profile web update dsh-ntr`。
+升级：改 `package.json` 版本号后重跑同一条命令，或 `dsh plugin --profile web update dsh-ntr-plus`。
 
 ---
 
@@ -59,7 +59,7 @@ dsh plugin --profile web add github:<你的用户名>/dsh-ntr
 
 **装完没反应 / 看不到 NTR**：十有八九是 `--profile` 写错，或者没重启 DSH（宿主端代码只在启动时加载一次）。
 
-**`EPERM ... zod` 之类**：profile 里残留了旧版插件目录（pnpm 的 hoisted 布局会把 `link:` 目标里的 `node_modules` 留在包内）。先卸旧版、删掉 profile 里的 `node_modules/dsh-ntr`，再重装。
+**`EPERM ... zod` 之类**：profile 里残留了旧版插件目录（pnpm 的 hoisted 布局会把 `link:` 目标里的 `node_modules` 留在包内）。先卸旧版、删掉 profile 里的 `node_modules/dsh-ntr-plus`，再重装。
 
 **agent 工具全“空输出”**：会话的权限预设是「完全访问」时，插件会让 agent 自己的工具直接跑；如果你把它改回受限模式并配 `never` 审批策略，agent 的权限请求会被策略拒绝——插件会在聊天里给出提示。
 

@@ -112,7 +112,7 @@ export interface SlashIsolation {
  * previous instance closes over that instance's store — it must be restored
  * before the new one wraps, or the new callbacks never run.
  */
-const WRAP_MARKER = Symbol.for('dsh-ntr.slash-isolation')
+const WRAP_MARKER = Symbol.for('dsh-ntr-plus.slash-isolation')
 
 interface WrapMarker {
   /** The instance that installed these wrappers. */

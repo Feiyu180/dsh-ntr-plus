@@ -1,5 +1,5 @@
 /**
- * Pure host-side logic for dsh-ntr: config validation, workspace guard,
+ * Pure host-side logic for dsh-ntr-plus: config validation, workspace guard,
  * child env assembly, capped transcript, event hub, and the RPC dispatcher.
  * No Node imports, no SDK imports — everything here is testable with plain
  * fakes.
@@ -467,7 +467,7 @@ export declare function sessionAgentPreset(session: SessionLogLike | undefined):
  */
 export declare function sessionAgentPresetFromLog(headerPreset: unknown, events: readonly unknown[]): string | undefined;
 /** Where the ACP-mode preset is declared inside this package. */
-export declare const ACP_PRESET_SOURCE = "dsh-ntr/presets/acp/acp.patch.yml";
+export declare const ACP_PRESET_SOURCE = "dsh-ntr-plus/presets/acp/acp.patch.yml";
 /** One harness preset-roster row (structurally `AgentPresetRow`; no dependency). */
 export interface RosterPresetRow {
     id: string;

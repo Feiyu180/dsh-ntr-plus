@@ -1,5 +1,5 @@
 # The `acp` agent preset — "NTR 模式": a session whose conversation is served by
-# an external ACP agent (dsh-ntr's `acp` LLM provider) instead of a
+# an external ACP agent (dsh-ntr-plus's `acp` LLM provider) instead of a
 # harness-driven model.
 #
 # WHY THIS FILE (and not a directory under `~/.dsh/.agent-presets/`): agent
@@ -7,7 +7,7 @@
 # bundles (`@deepseek-ai/dsh-agent-preset`'s `preset-<id>` row). The legacy
 # `$DSH_HOME/.agent-presets/<id>/` directory — `preset.yml` + `agent.cordis.yml`
 # — is dead: nothing reads it any more, so a preset that only exists there never
-# reaches the roster. dsh-ntr is itself a profile bundle (`dsh.bundle.patch` in
+# reaches the roster. dsh-ntr-plus is itself a profile bundle (`dsh.bundle.patch` in
 # package.json), so declaring the preset here is what makes "NTR 模式" appear in
 # the mode chooser with no copying step at all.
 #
@@ -16,7 +16,7 @@
 # session's model view — its identity, the deployment persona, tool schemas, the
 # AGENTS.md digest, the skill catalog, the runtime-context snapshot, plan mode,
 # compaction — describes work the DSH loop would have done itself. None of it
-# reaches the ACP agent (dsh-ntr forwards only the person's own message — see
+# reaches the ACP agent (dsh-ntr-plus forwards only the person's own message — see
 # AGENTS.md rule 16) and all of it perturbs the conversation, so this composition
 # contributes none of it. The model-visible surface is the ACP agent's own.
 #
@@ -32,7 +32,7 @@
 #   - `tool-skill` / `skill-filesystem`: same, plus the `<available_skills>` dump.
 #   - `plan-mode` / `tool-todo` / `tool-goal`: harness state machines this
 #     session never enters — the agent brings its own modes (the composer
-#     control in dsh-ntr drives those).
+#     control in dsh-ntr-plus drives those).
 #   - `compaction-basic` / `command-compact`: a compaction would dispatch an
 #     auxiliary harness call on the ACP route; the agent owns its own context.
 #   - the delegation/workflow rows: delegation is a harness capability.
@@ -71,9 +71,9 @@
           # session's model view either.
           #
           # The guard is a file of THIS package (`presets/acp/acp-guard.mjs`,
-          # exported as `dsh-ntr/acp-guard`). A relative `./acp-guard.mjs` would
+          # exported as `dsh-ntr-plus/acp-guard`). A relative `./acp-guard.mjs` would
           # not resolve here: a preset declaration's plugin names resolve against
           # the declaring Loader's resolution base (the profile directory), not
           # against the patch file that inserted the row.
           - id: acp-guard
-            name: dsh-ntr/acp-guard
+            name: dsh-ntr-plus/acp-guard

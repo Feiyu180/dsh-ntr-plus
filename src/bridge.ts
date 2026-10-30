@@ -12,7 +12,7 @@ import { homedir } from 'node:os'
 import { delimiter, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Writable, Readable } from 'node:stream'
-import { accessSync, constants, copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, renameSync, statSync, writeFileSync } from 'node:fs'
+import { accessSync, constants, copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, realpathSync, renameSync, statSync, writeFileSync } from 'node:fs'
 import {
   client,
   methods,
@@ -832,7 +832,7 @@ export class AgentBridge {
       Writable.toWeb(child.stdin) as WritableStream<Uint8Array>,
       Readable.toWeb(child.stdout) as ReadableStream<Uint8Array>,
     )
-    const app = client({ name: 'dsh-ntr' })
+    const app = client({ name: 'dsh-ntr-plus' })
       .onNotification(methods.client.session.update, ctx => {
         this.handleSessionUpdate(ctx.params)
       })
@@ -861,7 +861,7 @@ export class AgentBridge {
           terminal: false,
           session: { configOptions: { boolean: {} } },
         },
-        clientInfo: { name: 'dsh-ntr', title: 'DSH NTR', version: '0.1.0' },
+        clientInfo: { name: 'dsh-ntr-plus', title: 'DSH NTR', version: '0.1.0' },
       }),
       'initialize',
     )
@@ -1760,7 +1760,7 @@ function canonical(path: string): string {
  * project" from the directory they were started in — their file fences, the
  * environment block they show the model, their per-project state — so a process
  * started in the plugin's sandbox answers "my workspace is
- * ~/.dsh/dsh-ntr/workspaces" no matter what `session/new` said (observed on
+ * ~/.dsh/dsh-ntr-plus/workspaces" no matter what `session/new` said (observed on
  * codebuddy). `def.cwd` remains the answer for everything that has no DSH
  * session behind it (probes, `/acp`-RPC sessions, the settings-page test).
  */
@@ -1775,7 +1775,7 @@ function safeSpawnCwd(def: AcpAgentDef, wanted?: string): string {
 }
 
 /**
- * This plugin's OWN state directory, `~/.dsh/dsh-ntr`.
+ * This plugin's OWN state directory, `~/.dsh/dsh-ntr-plus`.
  *
  * Everything this plugin persists belongs in here — the agent registry, the
  * probed model catalog, and the default ACP execution workspaces. `~/.dsh` is
@@ -1793,7 +1793,27 @@ function safeSpawnCwd(def: AcpAgentDef, wanted?: string): string {
 export function pluginStateDir(home: string = homedir()): string {
   const override = process.env.DSH_NTR_STATE_DIR
   if (override !== undefined && override !== '') return override
-  return join(home, '.dsh', 'dsh-ntr')
+  const target = join(home, '.dsh', 'dsh-ntr-plus')
+  migrateLegacyStateDir(join(home, '.dsh', 'dsh-ntr'), target)
+  return target
+}
+
+/**
+ * Copy the pre-rename state directory (`~/.dsh/dsh-ntr`) into the new one, once.
+ *
+ * The plugin used to keep `agents.json`, the conversation map, the model cache
+ * and `workspaces/` under `~/.dsh/dsh-ntr`. Renaming the package would strand
+ * them, so the first boot of the new name copies the old tree across. Copy, not
+ * move: a half-finished migration must leave the old state readable, and a
+ * failed copy must never block the plugin.
+ */
+function migrateLegacyStateDir(legacy: string, target: string): void {
+  try {
+    if (legacy === target || existsSync(target) || !existsSync(legacy)) return
+    cpSync(legacy, target, { recursive: true })
+  } catch {
+    // Old state stays where it is; the next boot retries.
+  }
 }
 
 /**
@@ -1816,7 +1836,7 @@ function stateDirExplicit(): boolean {
 }
 
 /**
- * Pre-`~/.dsh/dsh-ntr` locations, kept only to MIGRATE them.
+ * Pre-`~/.dsh/dsh-ntr-plus` locations, kept only to MIGRATE them.
  *
  * These files used to live loose in the host's `~/.dsh` root. They are moved
  * into the plugin's own directory on first boot (see {@link migrateLegacyState})
@@ -1910,7 +1930,7 @@ export function rewriteLegacyWorkspaceRoots(def: AcpAgentDef, home: string = hom
 
 /**
  * Plugin-owned default execution workspace, anchored to the plugin state dir
- * (`~/.dsh/dsh-ntr/workspaces`).
+ * (`~/.dsh/dsh-ntr-plus/workspaces`).
  *
  * It deliberately does NOT derive from `process.cwd()`: that is wherever the
  * DSH host happened to be launched from, so the "default workspace" used to
@@ -2165,7 +2185,7 @@ export function killProcessTree(pid: number): void {
 export function npmInstallGlobal(pkg: string, onLog: (line: string) => void = () => {}): Promise<void> {
   return new Promise((resolveInstall, rejectInstall) => {
     let settled = false
-    onLog(`[dsh-ntr] "${pkg}" not found on PATH — running: npm install -g ${pkg}`)
+    onLog(`[dsh-ntr-plus] "${pkg}" not found on PATH — running: npm install -g ${pkg}`)
     const child = spawn('npm', ['install', '-g', '--no-fund', '--no-audit', pkg], {
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: process.platform === 'win32',
@@ -2192,7 +2212,7 @@ export function npmInstallGlobal(pkg: string, onLog: (line: string) => void = ()
     })
     child.on('exit', (code, signal) => {
       if (code === 0) {
-        onLog(`[dsh-ntr] npm install -g ${pkg} finished`)
+        onLog(`[dsh-ntr-plus] npm install -g ${pkg} finished`)
         settle(undefined)
         return
       }
@@ -2233,7 +2253,7 @@ export async function ensureAgentExecutable(
   await install(def.npmPackage, onLog)
   const retry = findExecutable(def.command)
   if (retry === undefined) {
-    onLog(`[dsh-ntr] ${def.npmPackage} installed but "${def.command}" is still not resolvable on PATH`)
+    onLog(`[dsh-ntr-plus] ${def.npmPackage} installed but "${def.command}" is still not resolvable on PATH`)
   }
   return { command: retry ?? def.command, installed: true }
 }
@@ -2323,7 +2343,7 @@ function quoteLegacyCommand(item: unknown): unknown {
  * absent; `ACP_ROUTE_BINDING_KEY` is therefore a hand-copy discipline with the
  * guard's `BINDING_KEY` (see tests/register.spec.ts for the equivalence).
  */
-export const ACP_ROUTE_BINDING_KEY = Symbol.for('dsh-ntr.acp-binding')
+export const ACP_ROUTE_BINDING_KEY = Symbol.for('dsh-ntr-plus.acp-binding')
 
 /** The registry shape the guard reads. Values are adapter model strings. */
 export interface AcpRouteBindingRegistry {
@@ -2617,7 +2637,7 @@ class TurnStreamController {
           // The silent-failure report: a normal stop with nothing the chat
           // plane renders. Aborted or failing turns need no extra hint; this
           // is specifically "protocol says success, the bubble is empty".
-          const line = `\n[dsh-ntr] agent "${this.session.agentId}" ended the turn with no visible output (stop reason: ${outcome.stopReason}). Some agents fold upstream failures — auth, billing, rate limits — into a normal stop; try resending, and check the agent process logs if it repeats.\n`
+          const line = `\n[dsh-ntr-plus] agent "${this.session.agentId}" ended the turn with no visible output (stop reason: ${outcome.stopReason}). Some agents fold upstream failures — auth, billing, rate limits — into a normal stop; try resending, and check the agent process logs if it repeats.\n`
           this.emitProse(seg, 'text', line)
         }
         this.finishSegment(seg, reason)
@@ -2692,14 +2712,14 @@ class TurnStreamController {
       // nothing new to show. An empty assistant message is not something the
       // plane can render honestly, so close with a one-line pointer.
       if (seg.index < 0 && this.pendingProse.length === 0) {
-        const line = `\n[dsh-ntr] agent "${this.session.agentId}" executed its tool call(s) but sent no text reply this turn — the tool details are in the ACP transcript view.\n`
+        const line = `\n[dsh-ntr-plus] agent "${this.session.agentId}" executed its tool call(s) but sent no text reply this turn — the tool details are in the ACP transcript view.\n`
         this.emitProse(seg, 'text', line)
       }
       this.finishSegment(seg, { kind: 'stop' })
     } else {
       // A settled turn that never showed anything: the zero-output warning the
       // plane would have gotten from a single-stream turn (constraint 23).
-      const line = `\n[dsh-ntr] agent "${this.session.agentId}" ended the turn with no visible output. Some agents fold upstream failures — auth, billing, rate limits — into a normal stop; try resending, and check the agent process logs if it repeats.\n`
+      const line = `\n[dsh-ntr-plus] agent "${this.session.agentId}" ended the turn with no visible output. Some agents fold upstream failures — auth, billing, rate limits — into a normal stop; try resending, and check the agent process logs if it repeats.\n`
       if (seg.index < 0) this.emitProse(seg, 'text', line)
       this.finishSegment(seg, { kind: 'stop' })
     }
@@ -3102,7 +3122,7 @@ export class BridgeManager {
    * Let the host resolve a chat session's workspace root — the sidebar's
    * selected workspace, which the agent's session and its process both run in.
    * Absent resolver → every chat session falls back to the agent's configured
-   * cwd (`~/.dsh/dsh-ntr/workspaces`), which is the right answer for `/acp`-RPC
+   * cwd (`~/.dsh/dsh-ntr-plus/workspaces`), which is the right answer for `/acp`-RPC
    * sessions and headless deployments.
    */
   setSessionWorkspaceResolver(resolver?: SessionWorkspaceResolver): void {
@@ -5220,7 +5240,7 @@ export class BridgeManager {
     // A chat session runs where its DSH session lives, not in the plugin's
     // sandbox directory: the sidebar's workspace selection IS the session's
     // workspace (`sandboxPolicy.resolve` reports it as `workspaceRoot`), and an
-    // agent whose cwd is `~/.dsh/dsh-ntr/workspaces` answers "current workspace"
+    // agent whose cwd is `~/.dsh/dsh-ntr-plus/workspaces` answers "current workspace"
     // with that path while its Read/Glob/Bash cannot see the user's project.
     // That root is trusted on top of the agent's own roots for this session
     // only (see `chatWorkspaceRoot`); the fallback is the configured cwd.
@@ -5333,7 +5353,7 @@ export class BridgeManager {
         // No in-flight turn of ours owns these staged results (a foreign
         // continuation, or one that outlived its turn): answer with one
         // closing message instead of touching the agent.
-        const line = `\n[dsh-ntr] this conversation has no in-flight ACP turn to resume; the tool details are in the ACP transcript view.\n`
+        const line = `\n[dsh-ntr-plus] this conversation has no in-flight ACP turn to resume; the tool details are in the ACP transcript view.\n`
         yield { type: 'block-start', index: 0, blockType: 'text' }
         yield { type: 'text-delta', index: 0, text: line }
         yield { type: 'block-end', index: 0, block: { type: 'text', text: line } }

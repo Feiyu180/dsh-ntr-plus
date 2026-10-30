@@ -1,4 +1,4 @@
-# dsh-ntr
+# dsh-ntr-plus
 
 > 这是 **GDWhisper/dsh-ntr 0.1.5 的个人构建版**（上游已到 0.3.x，机制改动很大，见 [CHANGELOG.md](./CHANGELOG.md)）。原项目 MIT，版权归 GDWhisper。
 
@@ -22,56 +22,32 @@
 
 ## 安装
 
-> **本发行包已内置构建产物 `lib/`**，下载即用，安装步骤见 [INSTALL.md](./INSTALL.md)（`dsh plugin --profile <name> add ./dsh-ntr-0.1.6.tgz`）。
+> **本发行包已内置构建产物 `lib/`**，下载即用，安装步骤见 [INSTALL.md](./INSTALL.md)（`dsh plugin --profile <name> add ./dsh-ntr-plus-0.1.6.tgz`）。
 > 下文「从源码安装」描述的是上游仓库的开发流程，需要 `tsconfig.json` 与 `tests/`，这两项不在本包内。
 
 本插件是一个 DSH **bundle**：`package.json` 的 `dsh.bundle.patch` 声明了随包分发的两层补丁——插件本体的 `cordis.patch.yml`，与 NTR 模式 preset 的 `presets/acp/acp.patch.yml`。用 `dsh plugin` 安装后，包会加入 profile 的 `dsh.profile.bundles`，补丁层**自动生效**，无需手动编辑任何配置文件。
 
-### 方式一：从官方界面安装
-
-打开 DSH 侧边栏的**插件**页，点**添加插件**，输入 `dsh-ntr`，点安装。装完刷新页面即可使用。
-
-### 方式二：从 npm registry 安装
+### 方式一：从 GitHub 安装（推荐）
 
 ```bash
-dsh plugin --profile web add dsh-ntr@latest
+dsh plugin --profile web add github:Feiyu180/dsh-ntr-plus
 ```
 
-升级重跑同一条命令即可。
+`--profile` 必填（网页版 `web`、桌面版 `desktop`、TUI `tui`），装完重启 DSH。
 
-> `add` 时**务必带 `@latest`**：不带的话包管理器会一直复用首次写入的版本号，之后连 `update` 也升不上去。
+### 方式二：用发行包离线安装
 
-### 方式三：经 [dsh-market](https://github.com/dsh-market/dsh-market) 插件市场安装
-
-先装市场本体：
+下载 Release 里的 `dsh-ntr-plus-0.1.6.tgz`，然后：
 
 ```bash
-dsh plugin --profile web add dshmarket
+dsh plugin --profile web add ./dsh-ntr-plus-0.1.6.tgz
 ```
 
-重启 `dsh web`，打开**插件**页：dsh 0.2.1 起市场是「已安装」旁边的**插件市场**标签页；更早的版本在**设置 → 插件市场**。搜索 `dsh-ntr`，确认来源后一键安装，装完刷新页面即可使用；之后的更新检查与升级也在市场里完成。官方 DSH 桌面 App 自带这个市场，直接在 App 的**插件**页里搜索安装即可。
+### 方式三：从源码
 
-> 市场的插件清单来自 [awesome-dsh-plugin](https://awesome-dsh-plugin.com) 精选目录，每天自动刷新。若搜索结果里暂时没有 `dsh-ntr`，用方式二从 npm 安装，不影响使用。
+本包已带构建产物 `lib/`，一般不需要自己构建；要改源码请走上游仓库的流程（本包不含 `tsconfig.json` / `tests/`）。
 
-### 方式四：从源码安装
-
-需要 Node.js ≥ 22.12.0。
-
-```bash
-git clone https://github.com/GDWhisper/dsh-ntr.git
-cd dsh-ntr
-npm install        # 安装构建依赖（typescript 等）
-npm run build      # 编译宿主 TS 与浏览器 Bundle 到 lib/（构建产物不入库，此步必须执行）
-dsh plugin --profile web add ./
-```
-
-之后升级：`git pull` → `npm run build` → 重启 `dsh web`。`add .` 以 `link:` 方式安装，重建后重启即生效，不需要重新 add。
-
-> 从源码安装切到 npm / 市场版前，先在插件管理器里卸载旧版，并删掉 profile 里的 `node_modules/dsh-ntr`。pnpm 的 hoisted 布局会把 `link:` 目标里的 `node_modules` 留在包目录内，旧依赖会遮蔽新装的 SDK，典型报错见「常见问题」里的 `EPERM ... zod`。
-
-> `dsh plugin` 是 pnpm 转发器，`--profile <name>` 必填；`add .` 会把当前目录以 `link:` 方式装进 profile。官方桌面 App 的 profile 由它自己的插件管理器掌管，不要对着它的 profile 跑命令行。
-
----
+> `dsh plugin` 是 pnpm 转发器，`--profile <name>` 必填；官方桌面 App 的 profile 由它自己的插件管理器掌管，不要对着它的 profile 跑命令行。
 
 ## 上手
 
@@ -159,7 +135,7 @@ agent 要动敏感的东西时会问你。审批卡直接出现在聊天输入�
 
 **会被平台风控吗？会封号吗？是反代吗？**
 
-不会，也不是反代。dsh-ntr 与 agent 之间的通信走 ACP——这是 agent 官方支持的协议入口。插件只负责启动你本地的 agent 进程并和它对话，全程不接触平台 API、不转发任何请求。模型调用由 agent 自己完成，跟你在终端里直接用它没有区别。在 NTR 提供的能力范围内合理使用，是官方允许的做法，不会因此封号。
+不会，也不是反代。dsh-ntr-plus 与 agent 之间的通信走 ACP——这是 agent 官方支持的协议入口。插件只负责启动你本地的 agent 进程并和它对话，全程不接触平台 API、不转发任何请求。模型调用由 agent 自己完成，跟你在终端里直接用它没有区别。在 NTR 提供的能力范围内合理使用，是官方允许的做法，不会因此封号。
 
 **为什么选完 agent 之后，输入框里没看到 DSH 的模型选择器？**
 
@@ -207,7 +183,7 @@ agent 要动敏感的东西时会问你。审批卡直接出现在聊天输入�
 
 **从源码安装切到 npm / 市场版后，启用时报 `EPERM ... zod`？**
 
-这是旧依赖残留，不是插件缺文件：错误路径里会出现 `node_modules/dsh-ntr/node_modules/.pnpm/...`。源码安装用 `link:` 指向你的仓库；pnpm 的 hoisted 布局在切到 registry 版时会把包目录换成真实文件，但会留下链接目标里的 `node_modules`。这份旧树（旧版 `@agentclientprotocol/sdk` 及其失效的 `zod` 软链）会遮蔽新装的依赖，DSH 导入时 stat 到坏链就报 `EPERM`。处理：在插件管理器里卸载 `dsh-ntr`，删除 `~/.dsh/profiles/<profile>/node_modules/dsh-ntr`（或只删它下面的 `node_modules`），再重装并重启。桌面 App 的 profile 请直接在 App 的插件页卸载/重装，不要用命令行。
+这是旧依赖残留，不是插件缺文件：错误路径里会出现 `node_modules/dsh-ntr-plus/node_modules/.pnpm/...`。源码安装用 `link:` 指向你的仓库；pnpm 的 hoisted 布局在切到 registry 版时会把包目录换成真实文件，但会留下链接目标里的 `node_modules`。这份旧树（旧版 `@agentclientprotocol/sdk` 及其失效的 `zod` 软链）会遮蔽新装的依赖，DSH 导入时 stat 到坏链就报 `EPERM`。处理：在插件管理器里卸载 `dsh-ntr-plus`，删除 `~/.dsh/profiles/<profile>/node_modules/dsh-ntr-plus`（或只删它下面的 `node_modules`），再重装并重启。桌面 App 的 profile 请直接在 App 的插件页卸载/重装，不要用命令行。
 
 ---
 
@@ -231,18 +207,18 @@ agent 要动敏感的东西时会问你。审批卡直接出现在聊天输入�
 
 ### 最小配置
 
-在 Profile 层的 `cordis.patch.yml` 里挂载。省略 `cwd` / `allowedCwdRoots` 时用插件自有工作区 `~/.dsh/dsh-ntr/workspaces`（保存时自动创建）；`command` 是**一整条命令行**，含空格的路径用引号包住。
+在 Profile 层的 `cordis.patch.yml` 里挂载。省略 `cwd` / `allowedCwdRoots` 时用插件自有工作区 `~/.dsh/dsh-ntr-plus/workspaces`（保存时自动创建）；`command` 是**一整条命令行**，含空格的路径用引号包住。
 
 ```yaml
-- id: dsh-ntr
-  name: dsh-ntr
+- id: dsh-ntr-plus
+  name: dsh-ntr-plus
   config:
     agents:
       - id: pi
         title: pi coding agent (ACP)
         command: /path/to/bin/pi-acp     # 例如 "codebuddy --acp"
-        cwd: ~/.dsh/dsh-ntr/workspaces
-        allowedCwdRoots: [~/.dsh/dsh-ntr/workspaces]
+        cwd: ~/.dsh/dsh-ntr-plus/workspaces
+        allowedCwdRoots: [~/.dsh/dsh-ntr-plus/workspaces]
 ```
 
 可选的 agent 字段：`npmPackage`（PATH 里找不到时自动 `npm install -g`）、`exposedModels`（NTR 座位菜单列哪些变体）、`idleTimeoutMs`（聊天进程的空闲释放窗口，`0` = 永不释放，默认 30 分钟）、`mcpServers`（额外交给 agent 连接的 MCP 服务器）。插件级还有 `transcriptMaxEntries`（会话事件缓冲上限，默认 600）与 `probeModelsOnBoot`（保留字段，启动时已不再为每个 agent 探测，见 `bootstrapCatalogs` 的注释）。可靠性超时与重试的默认值（`startupTimeoutMs`、`cancelFallbackMs`、`staleCancelRetryDelayMs`、`staleCancelMaxRetries`、`permissionTimeoutMs` 与 `permissionFallbackTimeoutMs`）见 [AGENTS.md](./AGENTS.md) 约束 12 与 13；设置页能改的都在设置页改。
@@ -279,7 +255,7 @@ dsh plugin --profile web add ./   # 挂载到 Web Profile
 
 以下每条都对应一处真实故障，改代码前先读对应文档。浏览器半区经 `/acp` RPC 与 `/api/acp/stream` SSE 和宿主半区通信；宿主半区每会话一个 `AgentBridge`，经 stdio JSON-RPC 驱动 agent 子进程。
 
-代码位置：`src/index.ts`（插件入口）· `src/protocol.ts`（共享类型）· `src/impl.ts`（纯宿主逻辑）· `src/bridge.ts`（子进程通信桥）· `src/client/`（React 扩展）· `presets/acp/`（NTR 模式声明）· `~/.dsh/dsh-ntr/`（运行时落盘）。
+代码位置：`src/index.ts`（插件入口）· `src/protocol.ts`（共享类型）· `src/impl.ts`（纯宿主逻辑）· `src/bridge.ts`（子进程通信桥）· `src/client/`（React 扩展）· `presets/acp/`（NTR 模式声明）· `~/.dsh/dsh-ntr-plus/`（运行时落盘）。
 
 - **DSH 只出显示层**：插件不写 DSH 的模型路由，不接管宿主的模型目录，也不让 ACP 模型出现在 DSH 原生选择器里。
 - **工作区即侧栏路径**：侧栏点开的目录必须成为 `session/new` 的 cwd **和** agent 子进程自己的 cwd。有一条 agent（codebuddy）在进程启动那一刻就定死工作区。
