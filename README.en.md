@@ -25,6 +25,17 @@ In one sentence: your host agent acts as an ACP client, negotiates capabilities 
 > **This release ships the prebuilt `lib/`**, so it works out of the box — see [INSTALL.md](./INSTALL.md).
 > The "install from source" section below describes the upstream development flow and needs `tsconfig.json` and `tests/`, which this package does not include.
 
+### Compatible DSH versions
+
+This package targets the plugin API of **DSH 0.1.5-rc through 0.2.x** (the browser half declares `@deepseek-ai/dsh-client-*@0.1.5-rc.1`). Upstream 0.3.x reworked the permission pipeline and the model catalog, so **0.3.x is not supported** — the plugin may fail to load, or load but do nothing.
+
+Two-step self check after installing:
+
+1. **Settings → NTR** shows the agent list and a "test" button → the host half loaded;
+2. The model name at the end of the composer opens a group named `ACP` → the model catalog bridge works.
+
+If either fails, check your DSH version first, then that `--profile` was right and DSH was restarted.
+
 This plugin is a DSH **bundle**: `package.json`'s `dsh.bundle.patch` declares the two patches shipped with the package — the plugin's own `cordis.patch.yml`, and the NTR-mode preset at `presets/acp/acp.patch.yml`. After `dsh plugin` installs it, the package joins the profile's `dsh.profile.bundles` and the patch layers take effect **automatically** — no config file needs editing by hand.
 
 ### Option 1: from GitHub (recommended)

@@ -11,6 +11,12 @@ This release ships the **prebuilt** `lib/`, so no `npm install` / `npm run build
 
 ---
 
+## 适用 DSH 版本
+
+面向 **DSH 0.1.5-rc ~ 0.2.x** 的插件 API；0.3.x 改过权限与模型目录机制，**不保证兼容**。装完自检：设置 → NTR 能看到 agent 列表（宿主端已加载）；输入框行尾模型名里有 `ACP` 分组（模型目录生效）。
+
+---
+
 ## 一、从本地包安装（推荐）/ From the local package
 
 先看本机 profile 叫什么：网页版通常是 `web`，桌面 App 通常是 `desktop`，TUI 是 `tui`。

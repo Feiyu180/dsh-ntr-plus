@@ -25,6 +25,17 @@
 > **本发行包已内置构建产物 `lib/`**，下载即用，安装步骤见 [INSTALL.md](./INSTALL.md)（`dsh plugin --profile <name> add ./dsh-ntr-plus-0.1.6.tgz`）。
 > 下文「从源码安装」描述的是上游仓库的开发流程，需要 `tsconfig.json` 与 `tests/`，这两项不在本包内。
 
+### 适用的 DSH 版本
+
+本包面向 **DSH 0.1.5-rc ~ 0.2.x** 的插件 API（浏览器侧依赖 `@deepseek-ai/dsh-client-*@0.1.5-rc.1`）。上游 0.3.x 改过权限管线与模型目录机制，**不保证兼容**——装到 0.3.x 上可能加载失败、或设置页/模型分组出现但功能不生效。
+
+装完自检两步：
+
+1. **设置 → NTR** 能看到 agent 列表与「测试」按钮 → 宿主端已加载；
+2. 输入框行尾的模型名点开，出现 `ACP` 分组 → 模型目录对接生效。
+
+两步任一不成立，先确认 DSH 版本，再确认 `--profile` 没写错、装完已重启。
+
 本插件是一个 DSH **bundle**：`package.json` 的 `dsh.bundle.patch` 声明了随包分发的两层补丁——插件本体的 `cordis.patch.yml`，与 NTR 模式 preset 的 `presets/acp/acp.patch.yml`。用 `dsh plugin` 安装后，包会加入 profile 的 `dsh.profile.bundles`，补丁层**自动生效**，无需手动编辑任何配置文件。
 
 ### 方式一：从 GitHub 安装（推荐）
