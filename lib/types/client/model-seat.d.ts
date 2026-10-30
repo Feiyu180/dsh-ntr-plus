@@ -1,0 +1,265 @@
+/**
+ * The ACP conversation's claim on two cells of the host's composer bar.
+ *
+ * Both cells are `single`, session-scoped slots the composer bar renders
+ * unconditionally, and both are held by claims this module defines — one that
+ * REPLACES what is there (`conversation.input.model`, see
+ * {@link createModelSeatClaim}) and one that EMPTIES it
+ * (`conversation.input.permission`, see {@link createPermissionSeatClaim}).
+ *
+ * WHAT IT IS: `conversation.input.model` is a `single` slot the host's composer
+ * bar renders unconditionally, in the TRAILING group (`margin-left: auto`),
+ * immediately before the activity/stop/submit chrome — which is exactly where
+ * the host's own model selector sits. Its shipped occupant is
+ * `client-ui-model-selection`'s `ModelSelect`, which reads the DSH model
+ * directory and submits through `session.selectModel`, which in turn writes
+ * `agentDefaultModel.saveSelection` — the process-wide default. On an ACP
+ * conversation none of that describes anything real: the models belong to the
+ * external agent (`agent/catalog`), so the seat would list providers this
+ * conversation cannot use, and clicking one would poison the default for every
+ * other conversation. Third-party seat plugins land in this same cell.
+ *
+ * SO THE CLAIM PUTS THE ACP BASE THERE. The ACP base (`AcpSessionControls`) is
+ * the surface that already describes what this conversation runs on, and the
+ * seat it has to displace is the one that would otherwise misdescribe it — one
+ * cell, one occupant, and the position the host's own base occupied. The base
+ * is installed by the ACP-mode gate in `index.tsx`, which holds the claim only
+ * while the staged conversation runs the ACP preset and releases it the moment
+ * it does not, so an ordinary conversation gets the native selector back and
+ * sees no ACP chrome at all. That gate is the whole isolation story: the entry
+ * does not exist outside ACP mode, rather than existing and rendering nothing.
+ *
+ * WHY A CLAIM AND NOT A `priority: -1` REGISTRATION: the declared rank is NOT
+ * what decides this cell on the desktop runtime. The client runner (the facade
+ * every bundle — including this one — is loaded through) REWRITES the priority
+ * of every non-chain registration with its own page-global counter, which only
+ * decreases:
+ *
+ *   // @deepseek-ai/dsh-cordis-client-runner, `guardedSlots`
+ *   const spec = slots.spec(slot);
+ *   let priority = options.priority;
+ *   if (spec === undefined || spec.kind !== "chain") {
+ *     priority = env.allocatePriority();   // `allocatePriority: () => --this.nextPriority`
+ *     options.priority = priority;
+ *   }
+ *
+ * So in a `single` cell (lowest live rank renders) the winner is simply
+ * whoever registered LAST — a rival seat plugin that loads a moment after us
+ * takes the cell no matter what either side declares. `dsh-thinking-effort`
+ * provably does exactly that: it registers a model + reasoning slider into this
+ * very cell, and it is a later registration, so it would stay on screen in ACP
+ * conversations regardless of any rank we declare (and its own declared `-10`
+ * is discarded just the same).
+ *
+ * The fix is therefore to treat the cell as a claim we VERIFY and, when a rival
+ * took it, retake by registering again (a new registration is the lowest rank
+ * on the page, which is what wins). That is the whole mechanism: read the
+ * renderer's own winner view (`entriesOfSlot`, the same call the renderer's
+ * outlet makes), compare it with our own component identities, and re-register
+ * when it is not ours — bounded, and honest about giving up. Nothing else from
+ * the retired seat machinery comes back: no abdicate recovery, no session-long
+ * `seatBroken`, no rank arithmetic as an end in itself.
+ *
+ * WHAT THE CLAIM MUST CARRY: the occupant's own inject face. That is not an
+ * optional extra — this cell is SESSION-scoped, so the renderer gives an entry
+ * only the framework's standard kit (`sessionId`, `useSession`, …) unless the
+ * entry declares an `inject`, and the ACP base reads `acp` and `faceFor`, both
+ * of which arrive ONLY through it. Registering the occupant without one makes
+ * it render with `acp === undefined`; the slot's error boundary catches the
+ * resulting crash and reports it as an ABDICATION, which retires our entry from
+ * the cell for the rest of that registration's life and hands the cell back to
+ * the shipped `ModelSelect` — the native seat returns, the ACP base is gone,
+ * and the gate never hears about it because `sync()` already verified the cell
+ * and reported "held by the ACP base". So `inject` is a required option (a
+ * compile error at the one call site) instead of an optional one (a silent
+ * abdication at runtime). See {@link ModelSeatClaimOptions.inject}.
+ *
+ * The gate reads the session's own preset (`stagedIsAcpMode` in `acp-ui.tsx`)
+ * rather than anything the plugin recorded, so it can never drift from the
+ * roster.
+ */
+/** Exact key of the composer's model seat (a `single`, session-scoped slot). */
+export declare const MODEL_SEAT_KEY = "conversation.input.model";
+/**
+ * Exact key of the composer's permission seat (a `single`, session-scoped
+ * slot): the cell the host's Access mode control occupies. It selects the
+ * file-write policy the HOST applies to its own tools, read from the
+ * `permissions` projection `dsh-permission-presets` owns. An ACP conversation's
+ * writes belong to the external agent's process, which never consults that
+ * policy, so there is nothing to put in this cell in ACP mode — which is why
+ * {@link createPermissionSeatClaim} installs a `null`-rendering occupant rather
+ * than a replacement control, and why its lifetime must be exactly the ACP-mode
+ * verdict's lifetime (see the claim's own note in `index.tsx`).
+ */
+export declare const PERMISSION_SEAT_KEY = "conversation.input.permission";
+/**
+ * Declared rank of the first occupant we install.
+ *
+ * Honoured only by a registry that keeps what we declare (a statically composed
+ * client, or a future runner that stops rewriting non-chain priorities): it
+ * displaces a shipped occupant registering at the default rank 0. Under the
+ * desktop runner the rank is overwritten with its own counter — see the module
+ * header — which is why the claim verifies ownership instead of trusting this.
+ */
+export declare const MODEL_SEAT_PRIORITY = -1;
+/**
+ * Rank of the first occupant the permission claim installs. Same meaning (and
+ * same caveat) as {@link MODEL_SEAT_PRIORITY}; see {@link createSeatClaim} for
+ * why a declared rank is never trusted as proof of ownership.
+ */
+export declare const PERMISSION_SEAT_PRIORITY = -1;
+/**
+ * How many times ONE claim may retake the cell before it stops and says so.
+ *
+ * Each retake is triggered by evidence (the cell's winner is not ours), so a
+ * normal page needs at most one; the cap only bounds a rival that registers in
+ * a loop, and reaching it is reported rather than hidden.
+ */
+export declare const MAX_SEAT_CLAIMS = 4;
+/** One live entry in the cell, narrowed to what the claim reads. */
+export interface SeatEntry {
+    component?: unknown;
+    options?: {
+        priority?: number;
+        registrant?: string;
+    };
+}
+/** The slot-registry face this module uses (structural: the registry is not a dependency of this bundle). */
+export interface SeatSlots {
+    inject(key: string, callback: () => (() => void) | Iterable<() => void>): () => void;
+    /** Returns the entry's disposer (the registry hangs it on the caller's fiber too). */
+    register(options: SeatRegisterOptions, component: unknown): () => void;
+    /** The renderer's winner view per cell; absent on a runtime that does not expose it. */
+    entriesOfSlot?(key: string): readonly SeatEntry[];
+    /** The declaration probe; absent on a runtime that does not expose it. */
+    spec?(key: string): {
+        kind?: string;
+    } | undefined;
+}
+/**
+ * One registration's options, narrowed to what the claim passes. `inject` is
+ * NOT optional in practice — see {@link ModelSeatClaimOptions.inject}.
+ */
+export interface SeatRegisterOptions {
+    name: string;
+    priority?: number;
+    /**
+     * The session-scoped face factory the renderer calls with the scope binding's
+     * key (and the store's actions) before rendering, merging its result into the
+     * component's props. A session-scoped occupant that renders conversation
+     * chrome without one arrives with only the standard kit — no `acp`, no
+     * `faceFor` — and crashes on its first render.
+     */
+    inject?(sessionId: unknown, actions?: unknown): unknown;
+}
+export interface ModelSeatClaimOptions {
+    slots: SeatSlots;
+    /**
+     * The occupant to install into the cell — the ACP base for an ACP-mode
+     * conversation. Called once per installed entry and receives whatever props
+     * the seat frame hands an entry (the injected face plus the standard kit),
+     * so it must be the component itself and not a bound closure over one
+     * session's props.
+     */
+    occupant(): unknown;
+    /**
+     * The inject face every installed entry declares — REQUIRED, and the reason
+     * is a failure mode that is silent by construction.
+     *
+     * `conversation.input.model` is a SESSION-scoped slot. The renderer composes
+     * an entry's props as `{ ...standardKit, ...entryInject(sessionId, actions),
+     * ...slotInject, ...ownerProps }` (`SessionEntry` → `renderEntry`), so the
+     * standard kit alone carries only the framework's own shares (`sessionId`,
+     * `useSession`, …). Everything this plugin's occupant reads beyond that —
+     * `acp`, `faceFor` — arrives ONLY through the entry's own `inject`.
+     *
+     * Register without it and the occupant renders with `acp === undefined`. The
+     * crash is caught by the slot's error boundary, which reports it as an
+     * ABDICATION: the registry retires our entry from its cell for the rest of
+     * that registration's life, and the outlet re-projects onto the cell's next
+     * survivor — the shipped `ModelSelect`. The native seat is back, the ACP base
+     * is gone, and nothing on the gate's side moves: the abdication happens
+     * during React's render phase, after `sync()` already verified the cell and
+     * reported "held by the ACP base". That is exactly how the base went missing
+     * with the diagnostic still claiming it was installed.
+     *
+     * So this is a required option rather than an optional one: the omission is
+     * then a compile error at the single call site instead of a runtime
+     * abdication nobody can see.
+     */
+    inject(sessionId: unknown, actions?: unknown): unknown;
+    /** Every evaluation reports its verdict here (the gate forwards it to the ACP view's diagnostic line). */
+    onDiag?(line: string): void;
+    maxClaims?: number;
+}
+/**
+ * Options for the permission claim. Unlike {@link ModelSeatClaimOptions}, both
+ * the occupant and the inject face are OPTIONAL: this claim exists to hold an
+ * EMPTY cell, so the defaults express what it is — nothing rendered, nothing
+ * injected — and a caller only passes them to customize (the tests do).
+ *
+ * The default inject still matters: the cell is session-scoped, and an entry
+ * without any inject receives only the framework's standard kit. A `null`
+ * occupant reads none of it, so an omitted inject is harmless here — whereas
+ * omitting one on the model seat is a silent abdication. The asymmetry is
+ * deliberate: required where silence hides a failure, defaulted where silence
+ * is the correct answer.
+ */
+export interface PermissionSeatClaimOptions {
+    slots: SeatSlots;
+    /** Optional custom occupant; defaults to a component rendering null. */
+    occupant?(): unknown;
+    /** Optional inject factory; defaults to providing an empty object `{}`. */
+    inject?(sessionId: unknown, actions?: unknown): unknown;
+    /** Every evaluation reports its verdict here (the gate forwards it to the ACP view's diagnostic line). */
+    onDiag?(line: string): void;
+    maxClaims?: number;
+}
+export interface SeatClaimOptions {
+    slots: SeatSlots;
+    slotKey: string;
+    basePriority: number;
+    occupant(): unknown;
+    inject?(sessionId: unknown, actions?: unknown): unknown;
+    label?: string;
+    onDiag?(line: string): void;
+    maxClaims?: number;
+}
+export interface ModelSeatClaim {
+    /** Hold or retake the cell; idempotent, so it can run on every gate evaluation. */
+    sync(): void;
+    /** Whether the last verified observation found our entry winning the cell. */
+    readonly holding: boolean;
+    /** Release every entry this claim installed (the gate's stand-down). */
+    release(): void;
+}
+/**
+ * Core generic slot claim engine.
+ *
+ * Installs and holds an occupant into a single-occupant slot, verifying via
+ * `entriesOfSlot` and performing bounded retakes if displaced by later registrations.
+ */
+export declare function createSeatClaim(options: SeatClaimOptions): ModelSeatClaim;
+/**
+ * Take and hold the composer's model seat for one ACP-mode spell.
+ *
+ * Lifecycle: the gate creates a claim when the staged conversation enters ACP
+ * mode, calls `sync()` on every evaluation (store mutation, session-list
+ * notification, preset frame, and any change to the cell itself), and calls
+ * `release()` when the conversation leaves ACP mode or the gate tears down.
+ */
+export declare function createModelSeatClaim(options: ModelSeatClaimOptions): ModelSeatClaim;
+/**
+ * Take and hold the composer's permission seat for one ACP-mode spell.
+ *
+ * Same lifecycle as {@link createModelSeatClaim} — created when the staged
+ * conversation enters ACP mode, `sync()`ed on every gate evaluation,
+ * `release()`d the instant it leaves — with one difference worth saying out
+ * loud: this claim has NO occupant to show for itself. Its entire product is
+ * the ABSENCE of the host's Access mode control, and absence is exactly what
+ * cannot be inspected after the fact. A permission claim that outlives its
+ * reason does not render an obvious wrong thing on an ACP conversation; it
+ * silently removes a control from ordinary ones, and every path through the
+ * gate that cannot confirm the verdict releases it.
+ */
+export declare function createPermissionSeatClaim(options: PermissionSeatClaimOptions): ModelSeatClaim;

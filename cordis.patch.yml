@@ -1,0 +1,104 @@
+# Mount line for the dsh-ntr bundle.
+#
+# The pure package-name row is REQUIRED for the ClientModuleRegistry to match
+# the browser half (dsh.client in package.json); the host half is the same row
+# (one plugin module carries both Node and browser entries).
+#
+# `agents` below SEEDS the agent registry at boot (BridgeManager's constructor
+# `defs`), but it is not the only source and not a boundary. The settings page's
+# launch-command box (`AgentForm.commandLine` in src/client/panel.tsx) writes
+# through RPC `agent/save` → `validateAgentDef` → `BridgeManager.saveAgent` into
+# `~/.dsh/dsh-ntr/agents.json`, and that is what spawns the child.
+# `validateAgentDef` checks shape only (non-empty, splittable command line,
+# length) — there is no program whitelist, so the browser CAN name any program.
+# A child's env comes from the same two places, and `detectHostAgents` hands the
+# stored `command` / `args` / `env` back to the browser UNSANITIZED as
+# `currentConfig`, where `envRows` edits them.
+- insert:
+    - id: dsh-ntr
+      name: dsh-ntr
+      config:
+        agents: []
+        # transcriptMaxEntries: 600
+        # probeModelsOnBoot: true   # DEAD — validated and stored, never read.
+        #                                `bootstrapCatalogs` is empty, so boot
+        #                                probes nothing whatever this says; true
+        #                                and false behave identically. Real
+        #                                probes: RPC `agent/probe-models` (the
+        #                                settings button) and `probeAgentModels`
+        #                                after `saveAgent`.
+        # Reliability tuning (defaults shown):
+        # startupTimeoutMs: 60000    # budget for initialize / session/new / session/load
+        # permissionTimeoutMs: 0     # auto-cancel a pending approval after N ms. 0 waits
+        #                                for the human on the DESIGNED ledger path; on a
+        #                                DEGRADED native route the turn still ends, after
+        #                                `permissionFallbackTimeoutMs` (default 300000) —
+        #                                see `LedgerFallbackReason`.
+        # nativeApprovalTimeoutMs: 300000
+        #                              How long the native approval route (the composer
+        #                              takeover) may stay unanswered before the ask is
+        #                              WITHDRAWN and re-asked on the settings ledger. 0 waits
+        #                              for the host forever. Default matches
+        #                              `permissionFallbackTimeoutMs`: one window for "this
+        #                              route is not working", not two. Raise it if a
+        #                              deployment's users routinely deliberate for minutes
+        #                              before answering (withdrawing only relocates the
+        #                              question to Settings — it never answers for them).
+        # permissionFallbackTimeoutMs: 300000
+        #                              Deadline for a DEGRADED ask (`unavailable`, or
+        #                              `native-timeout` after the withdrawal above): past it
+        #                              the ask is answered `cancelled` instead of hanging the
+        #                              turn. 0 disables even this. `permissionTimeoutMs > 0`
+        #                              governs every path alike and overrides both.
+        #                              `nativeApprovalTimeoutMs` and
+        #                              `permissionFallbackTimeoutMs` are ALSO editable at
+        #                              runtime (NTR 设置 → 审批时限). The card's value is
+        #                              persisted in the plugin's own state file and OUTRANKS
+        #                              this file; the card shows what this file asked for and
+        #                              offers a reset back to it. Only `permissionTimeoutMs`
+        #                              stays config-file-only, as the override of both.
+        # cancelFallbackMs: 15000    # force-finalize a turn the agent ignores after session/cancel (0 = off)
+        # staleCancelRetryDelayMs: 600  # resend a prompt answered cancelled with no cancel requested (0 = at once)
+        # staleCancelMaxRetries: 2      # cap on those resends before the cancelled stop is reported as-is
+        # ACP 模式 (agent preset) is declared by this package's own bundle
+        # patch list (package.json `dsh.bundle.patch` → presets/acp/acp.patch.yml),
+        # so it needs no install step and has no config knob. The settings card
+        # only reports the harness roster's verdict for the `preset-acp` row.
+        # The plugin's OWN default ACP agent (panel's ★ button) lives in the
+        # agent registry file at `~/.dsh/dsh-ntr/agents.json`, key
+        # `defaultAgentId` (`pluginStateDir` + `BridgeManager.getStoragePath`).
+        # `~/.dsh/acp-agents.json` is only a MIGRATION SOURCE (`legacyStatePaths`):
+        # `migrateLegacyState` moves it into the plugin directory on first boot,
+        # and nothing writes the old path afterwards.
+        # This plugin never reads or writes DSH's deployment default model: no
+        # ACP route is ever written there, so there is nothing to guard. (An
+        # older revision did write one and needed a host-side guard to put a
+        # native route back — both are gone; see AGENTS.md constraint 22.)
+        # Per-agent ACP-model filter — which of the agent's models its own
+        # conversation seats offer (panel checkboxes persist here). ACP models
+        # are never advertised in DSH's model catalog, so they cannot leak into
+        # a non-ACP conversation:
+        # agents:
+        #   - id: pi
+        #     command: pi-acp
+        #     npmPackage: pi-acp        # auto `npm install -g` when command is missing from PATH
+        #     exposedModels: [model-a, model-b]   # opt-in `agent@choice` variants; unset/[] = base entry only
+        #     idleTimeoutMs: 1800000     # release a chat process once it has been idle
+        #                                #   this long (ms) with NO live session
+        #                                #   (0 = never; unset = 30 min). This window
+        #                                #   applies ONLY to a process that has hosted a
+        #                                #   session: a probe child (`everHostedSession`
+        #                                #   false — what a model probe or a post-save
+        #                                #   probe leaves behind, i.e. the row the panel
+        #                                #   shows as connected) is released after
+        #                                #   `probeIdleTimeoutMs` (5 min) whatever this
+        #                                #   says, 0 included.
+        #     mcpServers:                # extra MCP servers handed to the agent at
+        #       - name: codegraph        #   session setup (the agent starts them
+        #         transport: stdio       #   itself). The plugin's OWN shape: every
+        #         command: /opt/bin/codegraph   #   entry carries a name and a transport.
+        #         args: [serve, --mcp]    #   `stdio` needs command, `http`/`sse` need
+        #         env: { KEY: value }    #   url. NOT the ACP wire shape, whose stdio
+        #                                #   variant has no `type` field (an entry
+        #                                #   written that way is silently dropped by
+        #                                #   the agent).
